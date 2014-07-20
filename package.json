@@ -1,0 +1,36 @@
+{
+  "name": "vorbis.js",
+  "version": "0.1.0",
+  "description": "A Vorbis audio decoder for aurora.js ported using emscripten",
+  "peerDependencies": {
+    "av": "~0.4.0",
+    "ogg.js": "~0.1.0"
+  },
+  "devDependencies": {
+    "browserify": "^4.1.10",
+    "browserify-shim": "^3.5.0"
+  },
+  "browserify-shim": {
+    "av": "global:AV",
+    "ogg.js": "global:AV.OggDemuxer"
+  },
+  "scripts": {
+    "prepublish": "make libvorbis"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/audiocogs/vorbis.js.git"
+  },
+  "keywords": [
+    "av",
+    "aurora.js",
+    "audio",
+    "codec"
+  ],
+  "author": "Devon Govett <devongovett@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/audiocogs/vorbis.js/issues"
+  },
+  "homepage": "https://github.com/audiocogs/vorbis.js"
+}
