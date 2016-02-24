@@ -12,19 +12,19 @@ OggDemuxer.plugins.push({
   init: function() {
     this.vorbis = Vorbis._VorbisInit();
     this.buflen = 4096;
-    this.buf = Vorbis._malloc(this.buflen);
+    this.vorBuf = Vorbis._malloc(this.buflen);
     this.headers = 3;
     this.headerBuffers = [];
   },
 
   readHeaders: function(packet) {
     if (this.buflen < packet.length) {
-      this.buf = Vorbis._realloc(this.buf, packet.length);
+      this.vorBuf = Vorbis._realloc(this.vorBuf, packet.length);
       this.buflen = packet.length;
     }
     
-    Vorbis.HEAPU8.set(packet, this.buf);
-    if (Vorbis._VorbisHeaderDecode(this.vorbis, this.buf, packet.length) !== 0)
+    Vorbis.HEAPU8.set(packet, this.vorBuf);
+    if (Vorbis._VorbisHeaderDecode(this.vorbis, this.vorBuf, packet.length) !== 0)
       throw new Error("Invalid vorbis header");
       
     this.headerBuffers.push(packet);
@@ -49,7 +49,7 @@ OggDemuxer.plugins.push({
       this.emit('metadata', this.metadata);
       
       Vorbis._VorbisDestroy(this.vorbis);
-      Vorbis._free(this.buf);
+      Vorbis._free(this.vorBuf);
       this.vorbis = null;
       
       for (var i = 0; i < 3; i++)
@@ -59,8 +59,11 @@ OggDemuxer.plugins.push({
     return this.headers === 0;
   },
   
-  readPacket: function(packet) {
-    this.emit('data', new AV.Buffer(packet));
+  readPacket: function(packet, streamEnd, granulePos) {
+    var data = new AV.Buffer(packet);
+    data._streamEnd = streamEnd;
+    data._granulePos = granulePos;
+    this.emit('data', data);
   }
 });
 

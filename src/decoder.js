@@ -12,7 +12,6 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     
     this.outlen = 4096;
     this.outbuf = Vorbis._malloc(this.outlen << 2);
-    this.decodedBuffer = null;
     
     this.vorbis = Vorbis._VorbisInit(this.outbuf, this.outlen);
     
@@ -21,7 +20,7 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     
     this.callback = Vorbis.Runtime.addFunction(function(len) {
       var samples = Vorbis.HEAPF32.subarray(offset, offset + len);
-      self.decodedBuffer = new Float32Array(samples);
+      self.emit('data', new Float32Array(samples));
     });
   };
   
@@ -40,10 +39,8 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     
     Vorbis.HEAPU8.set(packet.data, this.buf);
     var status = 0;
-    if ((status = Vorbis._VorbisDecode(this.vorbis, this.buf, packet.length, this.callback)) !== 0)
+    if ((status = Vorbis._VorbisDecode(this.vorbis, this.buf, packet.length, this.callback, packet._streamEnd, packet._granulePos)) !== 0)
       throw new Error("Vorbis decoding error: " + status);
-      
-    return this.decodedBuffer;
   };
   
   this.prototype.destroy = function() {
