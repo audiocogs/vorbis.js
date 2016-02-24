@@ -39,7 +39,7 @@ var VorbisDecoder = AV.Decoder.extend(function() {
     
     Vorbis.HEAPU8.set(packet.data, this.buf);
     var status = 0;
-    if ((status = Vorbis._VorbisDecode(this.vorbis, this.buf, packet.length, this.callback)) !== 0)
+    if ((status = Vorbis._VorbisDecode(this.vorbis, this.buf, packet.length, this.callback, packet._streamEnd, packet._granulePos)) !== 0)
       throw new Error("Vorbis decoding error: " + status);
   };
   

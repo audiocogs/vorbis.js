@@ -12,6 +12,7 @@ typedef struct {
   int headers;
   float *outbuf;
   int outlen;
+  long lastgranule;
 } Vorbis;
 
 typedef void (*AVCallback)(int);
@@ -59,7 +60,7 @@ char *VorbisGetComment(Vorbis *vorbis, int index) {
   return vorbis->comment.user_comments[index];
 }
 
-int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallback callback) {
+int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallback callback, long streamend, long granulepos) {
   // setup ogg packet
   vorbis->ogg.packet = buffer;
   vorbis->ogg.bytes = buflen;
@@ -84,10 +85,15 @@ int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallback callback) 
     
     int samples = 0;
     float **pcm;
+    int cutoff = granulepos - vorbis->lastgranule;
     while ((samples = vorbis_synthesis_pcmout(&vorbis->dsp, &pcm)) > 0) {      
       // interleave
       int channels = vorbis->info.channels;
       int len = samples < vorbis->outlen ? samples : vorbis->outlen;
+      if(streamend) {
+        len = len > cutoff ? cutoff : len;
+        cutoff -= len;
+      }
       
       for (int i = 0; i < channels; i++) {
         float *buf = &vorbis->outbuf[i];
@@ -100,11 +106,16 @@ int VorbisDecode(Vorbis *vorbis, void *buffer, int buflen, AVCallback callback) 
       
       status = vorbis_synthesis_read(&vorbis->dsp, len);
       callback(len * channels);
+      if(streamend && cutoff <= 0)
+        break;
     }
   }
   
   if (vorbis->ogg.b_o_s)
     vorbis->ogg.b_o_s = 0;
+
+  if(granulepos > 0)
+    vorbis->lastgranule = granulepos;
   
   return status;
 }

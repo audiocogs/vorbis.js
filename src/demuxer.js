@@ -59,8 +59,11 @@ OggDemuxer.plugins.push({
     return this.headers === 0;
   },
   
-  readPacket: function(packet) {
-    this.emit('data', new AV.Buffer(packet));
+  readPacket: function(packet, streamEnd, granulePos) {
+    var data = new AV.Buffer(packet);
+    data._streamEnd = streamEnd;
+    data._granulePos = granulePos;
+    this.emit('data', data);
   }
 });
 
